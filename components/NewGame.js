@@ -5,100 +5,14 @@ import {
     StyleSheet, TouchableOpacity, TextInput
 } from "react-native";
 import * as firebase from "firebase";
+import functions from '@react-native-firebase/functions';
 
 
 
-async function createTeams(playersName, tableId){
-    var gameRef = await createGame(playersName, tableId);
-    
-    var gameId= gameRef.key;
-    await firebase.database().ref('tables/'+tableId+'/games/'+gameId).update({id:gameId});
-    console.log(gameId);
-    
-    var playersId =[]
-    for (i=0; i<4; i++){
-        var snapshot = await firebase.database().ref('/names/' + playersName[i]).once('value');
-        if (snapshot.val() == null){
-            return alert("The user " + playersName[i] +" does not exist");
-        }
-        else{
-            playersId.push(snapshot.val().uid);
-        }
-    }
-    
-    
-    firebase.database().ref('/users/' + playersId[0]+"/games/").push(gameId);
-    firebase.database().ref('users/' + playersId[1]+"/games/").push(gameId);
-    firebase.database().ref('/users/' + playersId[2]+"/games/").push(gameId);
-    firebase.database().ref('users/' + playersId[3]+"/games/").push(gameId);
-    
-    var team1 = playersId.slice(0,2);
-    var team2= playersId.slice(2);
-    
-    team1.sort();
-    team2.sort();
-    
-    
-    
-    
-    
-    firebase.database().ref('teams/' + team1[0]+"-"+team1[1]+"/games/").push(gameId);
-    firebase.database().ref('teams/' + team2[0]+"-"+team2[1]+"/games/").push(gameId);
-
-}
 
 
 
-async function createGame(playersName, tableId){
-				
-    var playersId =[]
-    var playersObj = [];
 
-    for (i=0; i<4; i++){
-        var snapshot = await firebase.database().ref('/names/' + playersName[i]).once('value');
-        if (snapshot.val() == null){
-            return alert("The user " + playersName[i] +" does not exist");
-        }
-        else{
-            console.log(playersName[i]);
-            console.log(snapshot.val().uid);
-            playersId.push(snapshot.val().uid);
-        }
-    }
-     console.log(playersId);
-        
-    /*for (i=0; i<4; i++){
-    var snapshot = await firebase.database().ref('/users/' + playersId[i]).once('value');
-        playersObj.push(snapshot.val());
-    }
-    console.log(playersObj);
-    */
-    
-    firebase.database().ref('/users/' + playersId[0]).update({gamesPlayed: firebase.database.ServerValue.increment(1)});
-    firebase.database().ref('users/' + playersId[1]).update({gamesPlayed: firebase.database.ServerValue.increment(1)});
-    firebase.database().ref('/users/' + playersId[2]).update({gamesPlayed: firebase.database.ServerValue.increment(1)});
-    firebase.database().ref('users/' + playersId[3]).update({gamesPlayed: firebase.database.ServerValue.increment(1)});
-    
-    var d = new Date();
-    var startTime = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
-    
-    firebase.database().ref('tables/'+tableId).update({status: "live"});
-    return gameRef = firebase.database().ref('tables/'+tableId+'/games/').push({
-        player1: playersId[0],
-        player2: playersId[1],
-        player3: playersId[2],
-        player4: playersId[3],
-        points: null,
-        t1Score: 0,
-        t2Score:0,
-        isActive: true,
-        id: null,
-        start: startTime,
-    //profile_picture : imageUrl
-    });
-    
-    
-}
 export default (props) => {
     const [player1, setPlayer1] = useState("");
     const [player2, setPlayer2] = useState("");
@@ -147,8 +61,11 @@ export default (props) => {
 
 
 
-                    createTeams([player1,player2,player3,player4], tableId);
-                    
+                    functions().httpsCallable('createGame')({
+                        players: [player1,player2,player3,player4],
+                        tableId: tableId,
+                    });
+
 
 
 
@@ -164,7 +81,7 @@ export default (props) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        
+
     },
     teams: {
         flex: 1,
@@ -176,9 +93,9 @@ const styles = StyleSheet.create({
     vs: {
         alignItems: 'center',
         justifyContent: 'center',
-        
+
     },
-    vsText:{
+    vsText: {
         fontSize: 20,
         fontWeight: "500",
     },
@@ -196,7 +113,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         justifyContent: "center",
         padding: 10,
-        paddingLeft:20,
+        paddingLeft: 20,
     },
     loginBtn: {
         width: "80%",
