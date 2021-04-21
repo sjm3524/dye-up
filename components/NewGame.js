@@ -5,6 +5,7 @@ import {
     StyleSheet, TouchableOpacity, TextInput
 } from "react-native";
 import * as firebase from "firebase";
+require("firebase/functions");
 import functions from '@react-native-firebase/functions';
 
 
@@ -35,7 +36,7 @@ export default (props) => {
                 </View>
                 <Text style={styles.vsText}>&#38;</Text>
                 <View style={styles.inputView}>
-                    <TextInput placeholder="Player 2" autoCapitalize="none" onChangeText={(email) => {
+                    <TextInput placeholder="Player 2" autoCapitalize="none" onChangeText={(player2) => {
                         setPlayer2(player2);
                     }} />
                 </View>
@@ -61,7 +62,7 @@ export default (props) => {
 
 
 
-                    functions().httpsCallable('createGame')({
+                    firebase.functions().httpsCallable('createGame')({
                         players: [player1,player2,player3,player4],
                         tableId: tableId,
                     });
@@ -109,11 +110,14 @@ const styles = StyleSheet.create({
         width: "40%",
         backgroundColor: "#465881",
         borderRadius: 25,
-        height: 50,
+        height: 40,
         marginBottom: 20,
         justifyContent: "center",
-        padding: 10,
+        
         paddingLeft: 20,
+        padding: 0,
+        margin: 0,
+        borderWidth: 0,
     },
     loginBtn: {
         width: "80%",

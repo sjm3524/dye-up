@@ -40,7 +40,7 @@ const Tables = ({ navigation }) => {
     useEffect(() => {
 
         var items = [];
-        console.log("running")
+        
 
         firebase.database().ref('/tables/').on('value', snapshot => {
             if (snapshot.exists()) {
@@ -71,17 +71,19 @@ const Tables = ({ navigation }) => {
                     });
 
 
-                    setTables(items);
+                    
 
 
                 });
+                setTables(items);
                 setDataLoaded(true);
             }
         });
 
+        return () => firebase.database().ref('/tables/').off('value');
 
-
-    }, []);
+    }, [tables]);
+    
 
 
     if (dataLoaded) {
@@ -142,7 +144,7 @@ const styles = StyleSheet.create({
         height: 200,
       },
     header: {
-        paddingTop: 64,
+        paddingTop: 30,
         paddingBottom: 16,
         backgroundColor: "#FFF",
         alignItems: "center",

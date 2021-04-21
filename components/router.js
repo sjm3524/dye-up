@@ -13,25 +13,51 @@ import Ionicons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { createStackNavigator } from '@react-navigation/stack'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+
 
 const RootStack = createStackNavigator();
 const RootStackScreen = () => {
+    if (firebase.apps.length === 0) {
+        console.log("initializing firebase");
+        firebase.initializeApp(firebaseConfig);
+
+    }
 
     const [isLoading, setIsLoading] = React.useState(true);
     const [user, setUser] = React.useState(null);
 
     useEffect(() => {
+        let isMounted = true;
         firebase.auth().onAuthStateChanged((user) => {
             setUser(user);
             if (user) {
                 console.log("user is" + user);
 
             }
-            setIsLoading(false);
+            if (isMounted) {
+                setIsLoading(false);
+            }
 
 
         });
+        return () => { isMounted = false };
     }, []);
+    return (
+        <RootStack.Navigator headerMode="none">
+            {isLoading ? (
+                <RootStack.Screen name="Loading" component={Loading} />
+            ) : user != null ? (
+                <RootStack.Screen name="NavScreen" component={NavScreen} />
+
+            ) : (
+                <RootStack.Screen name="AuthStackScreen" component={AuthStackScreen} />
+            )
+            }
+            <RootStack.Screen name="NewGame" component={NewGame} />
+        </RootStack.Navigator>
+    );
+
 
     if (isLoading) {
         return (
@@ -43,7 +69,7 @@ const RootStackScreen = () => {
         return (
             <RootStack.Navigator headerMode="none" mode="modal">
                 <RootStack.Screen name="NavScreen" component={NavScreen} />
-                <RootStack.Screen name="NewGame" component={NewGame}/>
+                <RootStack.Screen name="NewGame" component={NewGame} />
             </RootStack.Navigator>
         );
     }
@@ -51,13 +77,14 @@ const RootStackScreen = () => {
         return (
             <RootStack.Navigator headerMode="none">
                 <RootStack.Screen name="AuthStackScreen" component={AuthStackScreen} />
-                
+
             </RootStack.Navigator>
         );
     }
 
 
 }
+export default RootStackScreen;
 
 
 const AuthStack = createStackNavigator();
@@ -70,13 +97,17 @@ const AuthStackScreen = () => (
     </AuthStack.Navigator>
 )
 
-const Tab = createBottomTabNavigator();
+//const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 const NavScreen = () => (
     <Tab.Navigator
+        tabBarPosition="bottom"
+        lazy={true}
+        showIcon={true}
         screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
+            tabBarIcon: ({ focused, color}) => {
                 let iconName;
-
+                
                 if (route.name === 'Tables') {
                     iconName = focused ? 'table-furniture' : 'table-furniture';
                 } else if (route.name === 'Game') {
@@ -87,13 +118,27 @@ const NavScreen = () => (
                 }
 
                 // You can return any component that you like here!
-                return <Ionicons name={iconName} size={size} color={color} />;
+                return <Ionicons name={iconName} color={color} size={25}/>;
 
             },
         })}
         tabBarOptions={{
             activeTintColor: 'tomato',
+            labelStyle: { fontSize: 8 },
+            iconStyle: { 
+                padding:0,
+                margin:0,
+                alignItems: "center",
+             },
             inactiveTintColor: 'gray',
+            showIcon: true,
+            tabStyle: {
+                
+                
+                
+                minHeight: 10,
+                maxHeight: 45,
+              },
         }}
     >
         <Tab.Screen name="Tables" component={Tables} />
@@ -105,17 +150,8 @@ const NavScreen = () => (
 
 
 
-export default () => {
+// export default () => {
 
 
-    return (
-
-       
-
-
-            <RootStackScreen/>
-
-
-        
-    );
-}
+//     return (<RootStackScreen />);
+// }

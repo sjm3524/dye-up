@@ -54,12 +54,17 @@ const Leaderboard = (props) => {
 
     const [selectedValue, setSelectedValue] = useState();
     const [players, setPlayers] = useState([]);
-    renderPost = post => {
+    
+    renderPlayers = post => {
         return (
             <View style={styles.feedItem}>
                 {/* <Image source={post.avatar} style={styles.avatar}/> */}
                 <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Image
+                        style={styles.avatar}
+                        source={ require("../assets/default.png")}
+                    />
                         <View>
                             <Text style={styles.name}>Name: {post.username}</Text>
                             <Text style={styles.name}>Games Played: {post.gamesPlayed}</Text>
@@ -67,8 +72,8 @@ const Leaderboard = (props) => {
                             <Text style={styles.name}>Wins: {post.wins}</Text>
                             <Text style={styles.name}>PPG: {post.points / post.gamesPlayed}</Text>
                             <Text style={styles.name}>KPG: {post.plunks / post.gamesPlayed}</Text>
-
                         </View>
+                        
                     </View>
                 </View>
             </View>
@@ -76,13 +81,19 @@ const Leaderboard = (props) => {
     }
 
     useEffect(() => {
-        var items = [];
+        var itemPlayers = [];
         console.log("running");
         firebase.database().ref('/users').on('value', snapshot => {
             if (snapshot.exists()) {
                 snapshot.forEach(data => {
                     console.log(data.val());
-                    items.push({
+                    // if (data.val().profile_picture != "default.png"){
+                    //     var downloadUrl = firebase.storage().ref("users/"+data.key+"/profilePicture/"+data.val().profile_picture).getDownloadURL();
+                    //     console.log(downloadUrl);
+                    // }else{
+                    //     downloadUrl = "../assets/default.png";
+                    // }
+                    itemPlayers.push({
 
 
                         gamesPlayed: data.val().gamesPlayed,
@@ -91,20 +102,23 @@ const Leaderboard = (props) => {
                         plunks: data.val().plunks,
                         points: data.val().points,
                         profPic: data.val().profile_picture,
+                        
                         username: data.val().username,
                         id: data.key
 
                     });
                     
-                    setPlayers(items);
+                    
                     
                 });
+                setPlayers(itemPlayers);
                 setDataLoaded(true);
             }
         });
 
+        return () => firebase.database().ref('/users').off('value');
 
-    }, []);
+    }, [players]);
 
     if (dataLoaded) {
     return (
@@ -132,7 +146,7 @@ const Leaderboard = (props) => {
             <FlatList
                 style={styles.feed}
                 data={players}
-                renderItem={({ item }) => this.renderPost(item)}
+                renderItem={({ item }) => this.renderPlayers(item)}
                 keyExtractor={item => item.id}
                 showsVerticalScrollIndicator={false}
             />
@@ -177,7 +191,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#EFECF4",
     },
     header: {
-        paddingTop: 64,
+        paddingTop: 30,
         paddingBottom: 16,
         backgroundColor: "#FFF",
         alignItems: "center",
