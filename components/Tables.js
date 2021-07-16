@@ -40,9 +40,10 @@ const Tables = ({ navigation }) => {
     useEffect(() => {
 
         var items = [];
-        
+        console.log("updating tables");
 
-        firebase.database().ref('/tables/').on('value', snapshot => {
+        firebase.database().ref('/tables/').once('value', snapshot => {
+            
             if (snapshot.exists()) {
 
 
