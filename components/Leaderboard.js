@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
-    StyleSheet, FlatList, Image
+    StyleSheet, FlatList, Image,  RefreshControl, SafeAreaView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker"
 //import Ionicons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -17,12 +17,14 @@ const cropDegree = 90;
 const textOffset = width;
 const textWidth = size - (textOffset * 2);
 const textHeight = size * (1 - cropDegree / 360) - (textOffset * 2);
+var pickerVal="PPG"
 
 
 const Leaderboard = (props) => {
 
 
     const [dataLoaded, setDataLoaded] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     function compareWinP(a, b) {
         return (b.wins / b.gamesPlayed) - (a.wins / a.gamesPlayed);
 
@@ -35,20 +37,20 @@ const Leaderboard = (props) => {
         return (b.plunks / b.gamesPlayed) - (a.plunks / a.gamesPlayed);
 
     }
-    function sortPlayers(itemValue) {
+    function sortPlayers(players, itemValue) {
 
         switch (itemValue) {
             case "PPG":
-                playersSorted.sort(comparePPG);
+                players.sort(comparePPG);
                 break;
             case "KPG":
-                playersSorted.sort(compareKPG);
+                players.sort(compareKPG);
                 break;
             case "WinPercent":
-                playersSorted.sort(compareWinP);
+                players.sort(compareWinP);
                 break;
             case "Names":
-                playersSorted.sort(Names);
+                players.sort(Names);
                 break;
 
             default:
@@ -63,6 +65,44 @@ const Leaderboard = (props) => {
     const [playersSorted, setPlayersSorted] = useState([]);
 
 
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        var itemPlayers = [];
+        console.log("running leaderboard");
+        firebase.database().ref('/users').once('value', snapshot => {
+            if (snapshot.exists()) {
+                snapshot.forEach(data => {
+                    
+                    itemPlayers.push({
+                        gamesPlayed: data.val().gamesPlayed,
+                        losses: data.val().losses,
+                        wins: data.val().wins,
+                        plunks: data.val().plunks,
+                        points: data.val().points,
+                        profPic: data.val().profile_picture,
+                        username: data.val().username,
+                        winPercent: (data.val().wins/data.val().gamesPlayed)*100,
+                        id: data.key,
+
+                    });
+
+
+
+                });
+                console.log(pickerVal);
+                sortPlayers(itemPlayers, pickerVal)
+                sortPlayers(itemPlayers, pickerVal)
+                setPlayers(itemPlayers)
+                setPlayersSorted(itemPlayers);
+                setDataLoaded(true);
+            }
+        });
+        setRefreshing(false)
+        return () => firebase.database().ref('/users').off('value');
+
+    }, []);
+
     renderPlayers = post => {
         const winPercent =Math.round(post.wins / post.gamesPlayed * 10000) / 100;
 
@@ -76,7 +116,7 @@ const Leaderboard = (props) => {
                             source={require("../assets/default.png")}
                         />
 
-                        <GaugeProgress
+                        {/* <GaugeProgress
                             size={80}
                             width={8}
                             fill={winPercent}
@@ -91,7 +131,7 @@ const Leaderboard = (props) => {
                                 <Text style={styles.text}>{winPercent}</Text>
                             </View>
 
-                        </GaugeProgress>
+                        </GaugeProgress> */}
 
 
 
@@ -101,6 +141,7 @@ const Leaderboard = (props) => {
                             <Text style={styles.name}>Games Played: {post.gamesPlayed}</Text>
 
                             <Text style={styles.name}>Wins: {post.wins}</Text>
+                            <Text style={styles.name}>Win%: {post.winPercent}</Text>
                             <Text style={styles.name}>PPG: {Math.round(post.points / post.gamesPlayed * 100) / 100}</Text>
                             <Text style={styles.name}>KPG: {Math.round(post.plunks / post.gamesPlayed * 100) / 100}</Text>
                         </View>
@@ -133,8 +174,8 @@ const Leaderboard = (props) => {
                         plunks: data.val().plunks,
                         points: data.val().points,
                         profPic: data.val().profile_picture,
-
                         username: data.val().username,
+                        winPercent: (data.val().wins/data.val().gamesPlayed)*100,
                         id: data.key,
 
                     });
@@ -151,7 +192,7 @@ const Leaderboard = (props) => {
 
         return () => firebase.database().ref('/users').off('value');
 
-    }, [players]);
+    }, []);
 
     if (dataLoaded) {
         return (
@@ -165,10 +206,11 @@ const Leaderboard = (props) => {
                     selectedValue={selectedValue}
                     style={{ height: 50, width: 150 }}
                     onValueChange={(itemValue, itemIndex) => {
-                        setSelectedValue(itemValue)
-                        sortPlayers(itemValue);
-
-
+                        
+                        sortPlayers(playersSorted, itemValue);
+                        pickerVal=itemValue;
+                        setSelectedValue(itemValue);
+                        console.log(pickerVal);
                     }
                     }
                 >
@@ -178,6 +220,12 @@ const Leaderboard = (props) => {
                 </Picker>
 
                 <FlatList
+                    refreshControl={
+                        <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        />
+                    }
                     style={styles.feed}
                     data={playersSorted}
                     renderItem={({ item }) => this.renderPlayers(item)}

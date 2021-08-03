@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import { Permissions, Notifications } from 'expo';
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert } from 'react-native';
 import { enableScreens } from "react-native-screens";
@@ -27,8 +28,6 @@ var firebaseConfig = {
   appId: "1:864924563527:web:de3564b93b678da7315962",
   measurementId: "G-HL7CY7X27V"
 };
-// Initialize Firebase
-//firebase.initializeApp(firebaseConfig);
 
 
 import Tables from './components/Tables'
